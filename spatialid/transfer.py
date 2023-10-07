@@ -24,6 +24,14 @@ from spatialid.trainer import Base, SpatialTrainer
 
 
 class Transfer(Base):
+    """Implementation of Spatial-ID
+
+    :param spatial_data: Spatial transcriptome data, which be saved in `h5ad` format.
+    :param single_data: Single cell transcriptome data, which be saved in `h5ad` format.
+    :param output_path: The annotated data and model save path.
+    :param device: If the GPU is available, the device number will be used.
+    """
+
     def __init__(self,
                  spatial_data: Union[str, AnnData],
                  single_data: Union[str, AnnData] = None,
@@ -69,6 +77,19 @@ class Transfer(Base):
                  marker_genes=None,
                  batch_size=4096,
                  epoch=200):
+        """Learning single cell type using `DNN` model.
+
+        :param sc_data: Single cell transcriptome data, which be saved in `h5ad` format.
+        :param filter_mt: Whether to filter MT- genes. default, True
+        :param min_cell: Whether to filter genes. default, 10
+        :param min_gene: Whether to filter cells. default, 300
+        :param max_cell: Whether to filter cells, Range: (0, 100). default, 98.0
+        :param ann_key: The annotation key, which should be saved in `*.obs_keys()`
+        :param marker_genes: Whether to use marker list data to train the model. If None, all data is used to train the model. Default, None.
+        :param batch_size:
+        :param epoch:
+        :return:
+        """
         if sc_data is None:
             sc_data = self.sc_data
         assert sc_data is not None, ValueError("Error, `sc_data` can not be `None`!")
@@ -91,6 +112,11 @@ class Transfer(Base):
     @torch.no_grad()
     def sc2st(self,
               sc_pht=None):
+        """Transfer single cell type to spatial data
+
+        :param sc_pht: Pre-trained `DNN` model
+        :return:
+        """
         if sc_pht is None:
             sc_pht = self.save_sc
         ckpt = self.load_checkpoint(sc_pht)
@@ -131,6 +157,18 @@ class Transfer(Base):
                    w_dae=1.,
                    w_gae=1.,
                    show_results=True):
+        """Fine tune the final annotation results, using Graph model.
+
+        :param pca_dim: PCA dims, default=200
+        :param n_neigh: neighbors number, default=15
+        :param edge_weight: Add edge weight to the graph model, default=True
+        :param epochs: GCN training epochs, default=200
+        :param w_cls: class num weight, default=20
+        :param w_dae: dnn weight
+        :param w_gae: gcn weight
+        :param show_results: Whether to show the annotation results
+        :return:
+        """
 
         self.filter(self.st_data)
         print('  After Preprocessing Data Info: %d cells × %d genes.' % (self.st_data.shape[0], self.st_data.shape[1]))

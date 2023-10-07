@@ -10,7 +10,7 @@ from wheel.bdist_wheel import bdist_wheel
 
 import spatialid
 
-__version__ = spatialid.__version__
+__version__ = "1.0.0"
 
 
 class BDistWheel(bdist_wheel):
