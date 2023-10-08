@@ -92,11 +92,14 @@ class Transfer(Base):
         """
         if sc_data is None:
             sc_data = self.sc_data
+        sc_data.var_names_make_unique()
         assert sc_data is not None, ValueError("Error, `sc_data` can not be `None`!")
         assert batch_size <= sc_data.shape[0], "Error, Batch size cannot be larger than the data set row."
         self.filter(sc_data, filter_mt, min_cell, min_gene, max_cell)
 
-        trainer = DnnTrainer(input_dims=sc_data.shape[1],
+        input_dims = sc_data.shape[1] if marker_genes is None else len(marker_genes)
+
+        trainer = DnnTrainer(input_dims=input_dims,
                              label_names=sc_data.obs[ann_key].cat.categories,
                              device=self.device,
                              save_path=self.save_sc)
