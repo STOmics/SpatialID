@@ -8,7 +8,7 @@
 import setuptools
 from wheel.bdist_wheel import bdist_wheel
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 
 
 class BDistWheel(bdist_wheel):
