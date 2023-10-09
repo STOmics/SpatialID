@@ -12,8 +12,6 @@ We provide two ways to install the package of Spatial-ID.
 Please note that the current Spatial-ID version offers full support of Linux operating system. Further version for other operating systems would be released soon.
 
 
-1. Python
-=========
 Install through `Pypi <https://pypi.org/project/SpatialID/>`_.
 
 .. code-block:: python

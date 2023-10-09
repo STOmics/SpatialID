@@ -1,8 +1,8 @@
-SpatialID
-=========
+API
+===
 
-Transfer
---------
+spatialid.transfer
+------------------
 
 .. automodule:: spatialid.transfer
    :members:
