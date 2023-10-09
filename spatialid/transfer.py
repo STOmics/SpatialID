@@ -76,7 +76,12 @@ class Transfer(Base):
                  ann_key="celltype",
                  marker_genes=None,
                  batch_size=4096,
-                 epoch=200):
+                 epoch=200,
+                 lr=3e-4,
+                 weight_decay=1e-6,
+                 gamma=2,
+                 alpha=.25,
+                 reduction="mean"):
         """Learning single cell type using `DNN` model.
 
         :param sc_data: Single cell transcriptome data, which be saved in `h5ad` format.
@@ -88,6 +93,11 @@ class Transfer(Base):
         :param marker_genes: Whether to use marker list data to train the model. If None, all data is used to train the model. Default, None.
         :param batch_size:
         :param epoch:
+        :param lr: learning rate
+        :param weight_decay:
+        :param gamma:
+        :param alpha:
+        :param reduction:
         :return:
         """
         if sc_data is None:
@@ -102,6 +112,11 @@ class Transfer(Base):
         trainer = DnnTrainer(input_dims=input_dims,
                              label_names=sc_data.obs[ann_key].cat.categories,
                              device=self.device,
+                             lr=lr,
+                             weight_decay=weight_decay,
+                             gamma=gamma,
+                             alpha=alpha,
+                             reduction=reduction,
                              save_path=self.save_sc)
         genes = sc_data.var_names.tolist() if marker_genes is None else marker_genes
         trainer.train(
@@ -153,9 +168,11 @@ class Transfer(Base):
 
     def annotation(self,
                    pca_dim=200,
-                   n_neigh=15,
+                   n_neigh=30,
                    edge_weight=True,
                    epochs=200,
+                   lr=0.01,
+                   weight_decay=0.0001,
                    w_cls=20.,
                    w_dae=1.,
                    w_gae=1.,
@@ -163,9 +180,11 @@ class Transfer(Base):
         """Fine tune the final annotation results, using Graph model.
 
         :param pca_dim: PCA dims, default=200
-        :param n_neigh: neighbors number, default=15
+        :param n_neigh: neighbors number, default=30
         :param edge_weight: Add edge weight to the graph model, default=True
         :param epochs: GCN training epochs, default=200
+        :param lr: learning rate
+        :param weight_decay:
         :param w_cls: class num weight, default=20
         :param w_dae: dnn weight
         :param w_gae: gcn weight
@@ -181,7 +200,7 @@ class Transfer(Base):
 
         sc.pp.normalize_per_cell(self.st_data, counts_per_cell_after=1e4)
         sc.pp.log1p(self.st_data)
-        self.st_data.X = (self.st_data.X - self.st_data.X.mean(0)) / (self.st_data.X.std(0) + 1e-12)
+        self.st_data.X = (self.st_data.X - self.st_data.X.mean(0)) / (self.st_data.X.std(0) + 1e-20)
         gene_mat = torch.Tensor(self.st_data.X)
         u, s, v = torch.pca_lowrank(gene_mat, pca_dim)
         gene_mat = torch.matmul(gene_mat, v)
@@ -206,7 +225,7 @@ class Transfer(Base):
         assert 'pseudo_classes' in self.st_data.uns_keys(), "Error, can not found `pseudo_classes` in `st_data.uns_keys()` list, please run `sc2st()` first!"
         num_classes = len(self.st_data.uns['pseudo_classes'])
 
-        trainer = SpatialTrainer(input_dim, num_classes, device=self.device)
+        trainer = SpatialTrainer(input_dim, num_classes, lr=lr, weight_decay=weight_decay, device=self.device)
         trainer.train(data, epochs, w_cls, w_dae, w_gae)
         trainer.save_checkpoint(self.save_st)
 
@@ -233,4 +252,4 @@ class Transfer(Base):
             plt.savefig(osp.join(self.output_path, "pseudo_top100.pdf"), bbox_inches='tight', dpi=150)
             sc.pl.spatial(self.st_data, img_key=None, color=['celltype_pred'], spot_size=spot_size, show=False)
             plt.savefig(osp.join(self.output_path, "celltype_pred.pdf"), bbox_inches='tight', dpi=150)
-        print("SpatialID successfully finished the power source annotation!")
+        print("\nSpatialID successfully finished the power source annotation!")

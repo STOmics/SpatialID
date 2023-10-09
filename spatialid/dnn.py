@@ -18,10 +18,10 @@ class DNNModel(nn.Module):
             nn.Linear(hidden_dim, int(hidden_dim / 2)),
             nn.GELU(),
             nn.Dropout(p=drop_rate),
-            nn.Linear(int(hidden_dim / 2), int(hidden_dim / 4)),
+            nn.Linear(int(hidden_dim / 2), int(hidden_dim / 2)),
             nn.GELU(),
             nn.Dropout(p=drop_rate),
-            nn.Linear(int(hidden_dim / 4), output_dim),
+            nn.Linear(int(hidden_dim / 2), output_dim),
             nn.Dropout(p=drop_rate)
         )
 

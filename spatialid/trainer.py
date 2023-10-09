@@ -49,18 +49,18 @@ class Base:
 
 
 class SpatialTrainer(Base):
-    def __init__(self, input_dim, num_classes, device):
+    def __init__(self, input_dim, num_classes, lr, weight_decay, device):
         super(SpatialTrainer, self).__init__(device=device)
         self.set_model(input_dim, num_classes)
-        self.set_optimizer()
+        self.set_optimizer(lr=lr, weight_decay=weight_decay)
 
     def set_model(self, input_dim, num_classes):
         gae_dim, dae_dim, feat_dim = [32, 8], [100, 20], 64
         self.model = SpatialModel(input_dim, num_classes, gae_dim, dae_dim, feat_dim).to(self.device)
         self.criterion = KDLoss(1)
 
-    def set_optimizer(self):
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01, weight_decay=0.0001)
+    def set_optimizer(self, lr=0.01, weight_decay=0.0001, **kwargs):
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 1, gamma=.95)
         self.scaler = torch.cuda.amp.GradScaler()
 
@@ -104,22 +104,22 @@ class SpatialTrainer(Base):
 
 
 class DnnTrainer(Base):
-    def __init__(self, input_dims, label_names, device=1, save_path="./dnn.bgi"):
+    def __init__(self, input_dims, label_names, device=1, lr=3e-4, weight_decay=1e-6, gamma=2, alpha=.25, reduction="mean", save_path="./dnn.bgi"):
         super(DnnTrainer, self).__init__(device=device)
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         self.input_dims = input_dims
         self.n_types = len(label_names)
         self.label_names = label_names
         self.save_path = save_path
-        self.set_model(input_dims, hidden_dims=1024, output_dims=self.n_types, gamma=2, alpha=.25)
-        self.set_optimizer()
+        self.set_model(input_dims, hidden_dims=1024, output_dims=self.n_types, gamma=gamma, alpha=alpha, reduction=reduction)
+        self.set_optimizer(lr=lr, weight_decay=weight_decay)
 
-    def set_model(self, input_dims, hidden_dims, output_dims, gamma, alpha, **kwargs):
+    def set_model(self, input_dims, hidden_dims, output_dims, gamma, alpha, reduction, **kwargs):
         self.model = DNNModel(input_dims, hidden_dims, output_dims).to(self.device)
-        self.criterion = MultiCEFocalLoss(class_num=self.n_types, gamma=gamma, alpha=alpha, reduction="mean")
+        self.criterion = MultiCEFocalLoss(class_num=self.n_types, gamma=gamma, alpha=alpha, reduction=reduction)
 
-    def set_optimizer(self, **kwargs):
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3, weight_decay=5e-4)
+    def set_optimizer(self, lr=3e-4, weight_decay=1e-6, **kwargs):
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay)
 
     def train(self, data, ann_key, marker_genes=None, batch_size=4096, epochs=200):
         dataset = DNNDataset(adata=data, ann_key=ann_key, marker_genes=marker_genes)
@@ -182,4 +182,4 @@ class DnnTrainer(Base):
                 correct = prediction.eq(targets).sum().item()
                 accuracy = correct / total * 100.
                 val_acc.append(accuracy)
-            print(f"  [{time.strftime('%Y-%m-%d %H:%M:%S')} total accuracy: {np.mean(val_acc):.2f}%]")
+            print(f"\n  [{time.strftime('%Y-%m-%d %H:%M:%S')} total accuracy: {np.mean(val_acc):.2f}%]")
