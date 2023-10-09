@@ -7,6 +7,14 @@ Spatially resolved transcriptomics (SRT) provides the opportunity to investigate
         
 The architecture was inspired by [Spatial-ID](https://doi.org/10.1038/s41467-022-35288-0).                            
 <img src="docs/source/_static/spatialID_overview.png" width="800"> 
+       
+### Installation      
+```python
+pip install SpatialID
+```
+        
+### API        
+For the API, please refer to: [https://spatialid.readthedocs.io/en/latest/index.html](https://spatialid.readthedocs.io/en/latest/index.html)
 
 ### Dependences
 [![numpy-1.21.3](https://img.shields.io/badge/numpy-1.21.3-red)](https://github.com/numpy/numpy)
