@@ -1,5 +1,6 @@
 [![python >3.8.8](https://img.shields.io/badge/python-3.8.8-brightgreen)](https://www.python.org/) 
 [![Downloads](https://static.pepy.tech/badge/spatialid)](https://pepy.tech/project/spatialid)
+[![Documentation Status](https://readthedocs.org/projects/spatialid/badge/?version=latest)](https://spatialid.readthedocs.io/en/latest/?badge=latest)
 #  Implementation of cell annotation method: Spatial-ID
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7340795.svg)](https://doi.org/10.5281/zenodo.7340795)           
 
