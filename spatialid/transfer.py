@@ -29,7 +29,7 @@ class Transfer(Base):
     :param spatial_data: Spatial transcriptome data, which be saved in `h5ad` format.
     :param single_data: Single cell transcriptome data, which be saved in `h5ad` format.
     :param output_path: The annotated data and model save path.
-    :param device: If the GPU is available, the device number will be used.
+    :param device: If the GPU is available, and device > -1 the GPU will be used. If device=-1, only 'CPU' will be used.
     """
 
     def __init__(self,
@@ -39,7 +39,7 @@ class Transfer(Base):
                  device=1):
         super(Transfer, self).__init__(device=device)
         self.output_path = output_path
-        self.device = device
+        self.device_type = device
         self.save_sc = osp.join(self.output_path, "learn_sc_dnn.bgi")
         os.makedirs(os.path.dirname(self.save_sc), exist_ok=True)
         self.save_st = osp.join(self.output_path, "annotation.bgi")
@@ -111,7 +111,7 @@ class Transfer(Base):
 
         trainer = DnnTrainer(input_dims=input_dims,
                              label_names=sc_data.obs[ann_key].cat.categories,
-                             device=self.device,
+                             device=self.device_type,
                              lr=lr,
                              weight_decay=weight_decay,
                              gamma=gamma,
@@ -225,7 +225,7 @@ class Transfer(Base):
         assert 'pseudo_classes' in self.st_data.uns_keys(), "Error, can not found `pseudo_classes` in `st_data.uns_keys()` list, please run `sc2st()` first!"
         num_classes = len(self.st_data.uns['pseudo_classes'])
 
-        trainer = SpatialTrainer(input_dim, num_classes, lr=lr, weight_decay=weight_decay, device=self.device)
+        trainer = SpatialTrainer(input_dim, num_classes, lr=lr, weight_decay=weight_decay, device=self.device_type)
         trainer.train(data, epochs, w_cls, w_dae, w_gae)
         trainer.save_checkpoint(self.save_st)
 

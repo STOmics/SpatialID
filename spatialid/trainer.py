@@ -21,7 +21,7 @@ class Base:
         self.scaler = None
         self.scheduler = None
         self.criterion = None
-        if torch.cuda.is_available():
+        if device > -1 and torch.cuda.is_available():
             self.device = torch.device(f"cuda:{device}")
         else:
             self.device = torch.device("cpu")
@@ -62,7 +62,6 @@ class SpatialTrainer(Base):
     def set_optimizer(self, lr=0.01, weight_decay=0.0001, **kwargs):
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay)
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 1, gamma=.95)
-        self.scaler = torch.cuda.amp.GradScaler()
 
     def train(self, data, epochs, w_cls, w_dae, w_gae):
         self.model.train()
@@ -72,14 +71,14 @@ class SpatialTrainer(Base):
             inputs, targets = data.x, data.y
             edge_index = data.edge_index
             edge_weight = data.edge_weight
-            with torch.cuda.amp.autocast():
-                outputs, dae_loss, gae_loss = self.model(inputs, edge_index, edge_weight)
-                loss = w_cls * self.criterion(outputs, targets) + w_dae * dae_loss + w_gae * gae_loss
+
+            outputs, dae_loss, gae_loss = self.model(inputs, edge_index, edge_weight)
+            loss = w_cls * self.criterion(outputs, targets) + w_dae * dae_loss + w_gae * gae_loss
             train_loss = loss.item()
             self.optimizer.zero_grad()
-            self.scaler.scale(loss).backward()
-            self.scaler.step(self.optimizer)
-            self.scaler.update()
+            loss.backward()
+            self.optimizer.step()
+
             total = targets.size(0)
             predictions = outputs.argmax(1)
             correct = predictions.eq(targets.argmax(1)).sum().item()
